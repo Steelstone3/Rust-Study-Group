@@ -33,4 +33,5 @@ On each save the tests will be run
 This tool can be set up to run other things such as build, clippy and so on e.g
 
 > cargo watch -cx build
+> 
 > cargo watch -cx clippy
