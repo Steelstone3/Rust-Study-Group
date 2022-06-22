@@ -39,18 +39,49 @@ impl Grid {
             cells
         }
     }
+
+    fn count_neighbours_at(&self, x: u8, y: u8) -> u8 {
+        let mut neighbours = 0;
+
+        if x > 0 && self.is_alive_at(x - 1, y) {
+            neighbours += 1;
+        }
+
+        if self.is_alive_at(x + 1, y) {
+            neighbours += 1;
+        }
+
+        neighbours
+    }
+
+    fn is_alive_at(&self, x: u8, y: u8) -> bool {
+        match self.cell_at(x, y) {
+            Some(CellStatus::ALIVE) => true,
+            _ => false,
+        }
+    }
+
+    fn cell_at(&self, x: u8, y: u8) -> Option<&CellStatus> {
+        self.cells.get((y * self.width + x) as usize)
+    }
 }
 
 pub fn next_generation(previous_generation: Grid) -> Grid {
+    let mut next_generation: Vec<(u8, u8)> = vec![];
+
     for y in 0..previous_generation.height {
         for x in 0..previous_generation.width {
-            // count neighbours
-                // look top left | top | top right
-                // look     left |     |     right
-                // look bot left | bot | bot right
+            let neighbours = previous_generation.count_neighbours_at(x, y);
+
+            if neighbours == 2 {
+                if previous_generation.is_alive_at(x, y) {
+                    next_generation.push((x, y))
+                }
+            }
         }
     }
-    Grid::with_alives(vec![], 3, 3)
+
+    Grid::with_alives(next_generation, previous_generation.width, previous_generation.height)
 }
 
 #[cfg(test)]
