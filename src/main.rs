@@ -21,7 +21,11 @@ impl Grid {
         }
     }
 
-    fn iterate(&mut self) {}
+    fn iterate(&mut self) {
+        for i in 0..self.cells.len() {
+            self.cells[i] = false;
+        }
+    }
 }
 
 impl Display for Grid {
@@ -86,6 +90,17 @@ mod tests {
         let result = format!("{}", grid);
         let expected = "*    \n*    \n     \n     \n     ";
 
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn cell_with_no_neighbours_dies() {
+        let mut grid = Grid::new(3, vec![Coordinate(1, 1)]);
+
+        grid.iterate();
+        let result = format!("{}", grid);
+
+        let expected = "   \n   \n   ";
         assert_eq!(expected, result);
     }
 }
