@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter, Write};
+use std::fmt::{Display, Formatter};
 
 struct Grid {
     cells: Vec<bool>,
@@ -29,13 +29,13 @@ impl Display for Grid {
         let mut result = String::new();
         for (i, cell) in self.cells.iter().enumerate() {
             if i % self.size == 0 && i > 0 {
-                result.push_str("\n");
+                result.push('\n');
             }
 
             if *cell {
-                result.push_str("*");
+                result.push('*');
             } else {
-                result.push_str(" ");
+                result.push(' ');
             }
         }
 
