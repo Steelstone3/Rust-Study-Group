@@ -70,4 +70,22 @@ mod tests {
 
         assert_eq!(expected, result);
     }
+
+    #[test]
+    fn render_two_cells() {
+        let grid = Grid::new(5, vec![Coordinate(0, 0),Coordinate(1, 0)]);
+        let result = format!("{}", grid);
+        let expected = "**   \n     \n     \n     \n     ";
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn render_cells_on_second_row() {
+        let grid = Grid::new(5, vec![Coordinate(0, 0),Coordinate(0, 1)]);
+        let result = format!("{}", grid);
+        let expected = "*    \n*    \n     \n     \n     ";
+
+        assert_eq!(expected, result);
+    }
 }
