@@ -24,7 +24,34 @@ impl Grid {
     fn iterate(&mut self) {
         for i in 0..self.cells.len() {
             self.cells[i] = false;
+
+            let y = i / self.size;
+            let x = i % self.size;
+            let number_of_neighbours = self.count_neighbours(x as isize, y as isize);
+
+            if number_of_neighbours == 2 {
+                self.cells[i] = true;
+            }
         }
+    }
+
+    fn count_neighbours(&self, x: isize, y: isize) -> u8 {
+        let mut result = 0;
+        let number: isize = -1;
+
+        for x_transform in number..=1 {
+            for y_transform in number..=1 {
+                if x_transform == 0 && y_transform == 0 { continue; }
+                let x = x + x_transform;
+                let y = (y + y_transform) * (self.size as isize);
+                if x >= 0 && y >= 0 && x < self.size as isize && y < self.size as isize
+                    && self.cells[(x + y) as usize] {
+                    result += 1;
+                }
+            }
+        }
+
+        result
     }
 }
 
@@ -101,6 +128,21 @@ mod tests {
         let result = format!("{}", grid);
 
         let expected = "   \n   \n   ";
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn cell_with_two_neighbours_lives() {
+        let mut grid = Grid::new(3, vec![
+                                         Coordinate(1, 1),
+                                         Coordinate(1, 2),
+                                         Coordinate(2, 1)
+                                 ]);
+
+        grid.iterate();
+        let result = format!("{}", grid);
+
+        let expected = "   \n * \n   ";
         assert_eq!(expected, result);
     }
 }
