@@ -1,8 +1,9 @@
 [package]
-name = "conways_game_of_life"
+name = "mar_rover"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rstest="0.13.0"
