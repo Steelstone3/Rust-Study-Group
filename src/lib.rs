@@ -1,19 +1,16 @@
 use crate::CellStatus::{ALIVE, DEAD};
 
-fn main() {
-    println!("Hello, world!");
-}
-
 #[derive(PartialEq, Debug, Clone)]
 pub enum CellStatus {
     ALIVE,
     DEAD,
 }
 
+#[derive(Clone)]
 pub struct Grid {
-    height: u8,
-    width: u8,
-    cells: Vec<Vec<CellStatus>>,
+    pub height: u8,
+    pub width: u8,
+    pub cells: Vec<Vec<CellStatus>>,
 }
 
 // x = 1
