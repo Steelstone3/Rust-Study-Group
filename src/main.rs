@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use crate::CellStatus::{ALIVE, DEAD};
+use rayon::prelude::*;
 
 fn main() {
     println!("Hello, world!");
@@ -71,17 +72,7 @@ pub fn multi_threaded_next_generation(previous_generation: Arc<Grid>) -> Grid {
     for x in 0..previous_generation.height {
         let grid = previous_generation.clone();
         thread_handles.push(std::thread::spawn(move || {
-            let mut line: Vec<CellStatus> = Vec::new();
-            for y in 0..grid.width {
-                let neighbours = grid.count_neighbours_at(x, y);
-                match (neighbours, grid.cell_at(x, y)) {
-                    (2 | 3, Some(&ALIVE)) => line.push(ALIVE),
-                    (3, Some(&DEAD)) => line.push(ALIVE),
-                    _ => line.push(DEAD),
-                }
-            }
-
-            line
+            next_generation_line(x, grid)
         }));
     }
 
@@ -96,6 +87,33 @@ pub fn multi_threaded_next_generation(previous_generation: Arc<Grid>) -> Grid {
         width: previous_generation.width,
         height: previous_generation.height,
     }
+}
+
+pub fn parallel_iter_next_generation(previous_generation: Arc<Grid>) -> Grid {
+    let next_generation: Vec<Vec<CellStatus>> = (0..previous_generation.height)
+        .into_par_iter()
+        .map(|x| next_generation_line(x, previous_generation.clone()))
+        .collect();
+
+    Grid {
+        cells: next_generation,
+        width: previous_generation.width,
+        height: previous_generation.height,
+    }
+}
+
+fn next_generation_line(x: u8, grid: Arc<Grid>) -> Vec<CellStatus> {
+    let mut line: Vec<CellStatus> = Vec::new();
+    for y in 0..grid.width {
+        let neighbours = grid.count_neighbours_at(x, y);
+        match (neighbours, grid.cell_at(x, y)) {
+            (2 | 3, Some(&ALIVE)) => line.push(ALIVE),
+            (3, Some(&DEAD)) => line.push(ALIVE),
+            _ => line.push(DEAD),
+        }
+    }
+
+    line
 }
 
 pub fn next_generation(previous_generation: &Grid) -> Grid {
@@ -262,7 +280,7 @@ mod game_of_life_should {
                 vec![DEAD, ALIVE, DEAD, DEAD, ALIVE, DEAD],
                 vec![DEAD, DEAD, ALIVE, DEAD, DEAD, DEAD],
                 vec![DEAD, DEAD, DEAD, DEAD, DEAD, DEAD],
-                vec![DEAD, DEAD, DEAD, DEAD, DEAD, DEAD]
+                vec![DEAD, DEAD, DEAD, DEAD, DEAD, DEAD],
             ]
         );
 
@@ -287,14 +305,14 @@ mod game_of_life_should {
         };
 
         assert_eq!(
-            multi_threaded_next_generation(Arc::new(previous_generation)).cells,
+            parallel_iter_next_generation(Arc::new(previous_generation)).cells,
             vec![
                 vec![DEAD, DEAD, DEAD, ALIVE, DEAD, DEAD],
                 vec![DEAD, ALIVE, DEAD, DEAD, ALIVE, DEAD],
                 vec![DEAD, ALIVE, DEAD, DEAD, ALIVE, DEAD],
                 vec![DEAD, DEAD, ALIVE, DEAD, DEAD, DEAD],
                 vec![DEAD, DEAD, DEAD, DEAD, DEAD, DEAD],
-                vec![DEAD, DEAD, DEAD, DEAD, DEAD, DEAD]
+                vec![DEAD, DEAD, DEAD, DEAD, DEAD, DEAD],
             ]
         );
     }
