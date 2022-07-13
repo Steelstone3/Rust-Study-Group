@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::CellStatus::{ALIVE, DEAD};
 
 fn main() {
@@ -64,23 +65,28 @@ impl Grid {
     }
 }
 
-pub fn multi_threaded_next_generation(previous_generation: &Grid) -> Grid {
-    let mut next_generation: Vec<Vec<CellStatus>> = Vec::new();
+pub fn multi_threaded_next_generation(previous_generation: Arc<Grid>) -> Grid {
+    let mut thread_handles = Vec::new();
 
     for x in 0..previous_generation.height {
-        let handle = std::thread::spawn( move || {
+        let grid = previous_generation.clone();
+        thread_handles.push(std::thread::spawn(move || {
             let mut line: Vec<CellStatus> = Vec::new();
-            for y in 0..previous_generation.width {
-                let neighbours = previous_generation.count_neighbours_at(x, y);
-                match (neighbours, previous_generation.cell_at(x, y)) {
+            for y in 0..grid.width {
+                let neighbours = grid.count_neighbours_at(x, y);
+                match (neighbours, grid.cell_at(x, y)) {
                     (2 | 3, Some(&ALIVE)) => line.push(ALIVE),
                     (3, Some(&DEAD)) => line.push(ALIVE),
                     _ => line.push(DEAD),
                 }
             }
 
-            return line;
-        });
+            line
+        }));
+    }
+
+    let mut next_generation: Vec<Vec<CellStatus>> = Vec::new();
+    for handle in thread_handles {
         let line = handle.join().unwrap();
         next_generation.push(line);
     }
@@ -281,7 +287,7 @@ mod game_of_life_should {
         };
 
         assert_eq!(
-            multi_threaded_next_generation(&previous_generation).cells,
+            multi_threaded_next_generation(Arc::new(previous_generation)).cells,
             vec![
                 vec![DEAD, DEAD, DEAD, ALIVE, DEAD, DEAD],
                 vec![DEAD, ALIVE, DEAD, DEAD, ALIVE, DEAD],
