@@ -1,5 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rand::Rng;
+use rand::prelude::StdRng;
+use rand::{Rng, SeedableRng};
 use conways_game_of_life::{CellStatus, Grid, next_generation};
 use conways_game_of_life::CellStatus::{ALIVE, DEAD};
 
@@ -15,12 +16,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
 fn generate_test_data(size: usize) -> Vec<Vec<CellStatus>> {
     let mut result = vec![];
-    let mut rng = rand::thread_rng();
+    let mut rng = StdRng::seed_from_u64(42);
 
     for i in 0..=size {
         let mut inner = vec![];
         for i in 0..=size {
-            let rand_value = rand::thread_rng().gen();
+            let rand_value = rng.gen();
             inner.push(if rand_value { DEAD } else { ALIVE })
         }
         result.push(inner);
