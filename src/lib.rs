@@ -62,25 +62,23 @@ impl Grid {
     }
 }
 
-pub fn next_generation(previous_generation: Grid) -> Grid {
+pub fn next_generation(previous_generation: Arc<Grid>) -> Grid {
     let mut next_generation: Vec<Vec<CellStatus>> = Vec::new();
     let height = previous_generation.height;
     let width = previous_generation.width;
-    let previous_generation = Arc::new(RwLock::new(previous_generation));
     let (tx, rx) = sync_channel(height as usize);
 
     let mut handles = vec![];
 
     for x in 0..height {
-        let shared_previous_generation = previous_generation.clone();
         let tx = tx.clone();
+        let previous_generation = previous_generation.clone();
         handles.push(thread::spawn(move || {
-            let shared_previous_generation = shared_previous_generation.read().expect("Unable to get read-access to previous generation");
             let mut line: Vec<CellStatus> = Vec::new();
-                for y in 0..shared_previous_generation.width {
-                    let neighbours = shared_previous_generation.count_neighbours_at(x, y);
+                for y in 0..previous_generation.width {
+                    let neighbours = previous_generation.count_neighbours_at(x, y);
 
-                    match (neighbours, shared_previous_generation.cell_at(x, y)) {
+                    match (neighbours, previous_generation.cell_at(x, y)) {
                         (2 | 3, Some(&true)) => {
                             line.push(true)
                         },
@@ -112,13 +110,37 @@ pub fn next_generation(previous_generation: Grid) -> Grid {
     }
 }
 
+pub fn next_generation_serial(previous_generation: Grid) -> Grid {
+    let mut next_generation: Vec<Vec<CellStatus>> = Vec::new();
+
+    for x in 0..previous_generation.height {
+        let mut line: Vec<CellStatus> = Vec::new();
+        for y in 0..previous_generation.width {
+            let neighbours = previous_generation.count_neighbours_at(x, y);
+
+            match (neighbours, previous_generation.cell_at(x, y)) {
+                (2 | 3, Some(true)) => line.push(false),
+                (3, Some(false)) => line.push(true),
+                _ => line.push(false),
+            }
+        }
+        next_generation.push(line);
+    }
+
+    Grid {
+        cells: next_generation,
+        width: previous_generation.width,
+        height: previous_generation.height,
+    }
+}
+
 #[cfg(test)]
 mod game_of_life_should {
     use super::*;
 
     #[test]
     fn let_cell_die_because_it_has_no_friends() {
-        let previous_generation = Grid {
+        let previous_generation = Arc::new(Grid {
             cells: vec![
                 vec![true, false, false],
                 vec![false, false, false],
@@ -126,7 +148,7 @@ mod game_of_life_should {
             ],
             height: 3,
             width: 3,
-        };
+        });
 
         assert_eq!(next_generation(previous_generation).cells, vec![
             vec![false, false, false],
@@ -137,7 +159,7 @@ mod game_of_life_should {
 
     #[test]
     fn let_cell_live_because_the_cell_has_2_friendly_neighbourhood_cell() {
-        let previous_generation = Grid {
+        let previous_generation = Arc::new(Grid {
             cells: vec![
                 vec![true, true, true],
                 vec![false, false, false],
@@ -145,7 +167,7 @@ mod game_of_life_should {
             ],
             height: 3,
             width: 3,
-        };
+        });
 
         assert_eq!(
             next_generation(previous_generation).cells,
@@ -159,7 +181,7 @@ mod game_of_life_should {
 
     #[test]
     fn let_cell_die_because_it_has_no_friends_plus_some_alive_cells() {
-        let previous_generation = Grid {
+        let previous_generation = Arc::new(Grid {
             cells: vec![
                 vec![true, false, false],
                 vec![false, false, true],
@@ -167,7 +189,7 @@ mod game_of_life_should {
             ],
             height: 3,
             width: 3,
-        };
+        });
 
         assert_eq!(next_generation(previous_generation).cells, vec![
             vec![false, false, false],
@@ -178,7 +200,7 @@ mod game_of_life_should {
 
     #[test]
     fn dead_cell_with_three_neighbours_is_alive() {
-        let previous_generation = Grid {
+        let previous_generation = Arc::new(Grid {
             cells: vec![
                 vec![false, false, false],
                 vec![false, false, true],
@@ -186,7 +208,7 @@ mod game_of_life_should {
             ],
             height: 3,
             width: 3,
-        };
+        });
 
         assert_eq!(next_generation(previous_generation).cells, vec![
             vec![false, false, false],
@@ -197,7 +219,7 @@ mod game_of_life_should {
 
     #[test]
     fn alive_cell_with_three_neighbours_stays_alive() {
-        let previous_generation = Grid {
+        let previous_generation = Arc::new(Grid {
             cells: vec![
                 vec![false, false, false],
                 vec![false, true, true],
@@ -205,7 +227,7 @@ mod game_of_life_should {
             ],
             height: 3,
             width: 3,
-        };
+        });
 
         assert_eq!(next_generation(previous_generation).cells, vec![
             vec![false, false, false],
