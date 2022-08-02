@@ -48,7 +48,7 @@ impl BowlingGame {
             return Err(Error::NotEnoughPinsLeft);
         }
 
-        if self.rolls == self.max_rolls {
+        if self.is_game_complete() {
             return Err(Error::GameComplete);
         }
 
@@ -57,7 +57,7 @@ impl BowlingGame {
 
         if let Some(ref mut frame) = self.active_frame {
             if frame.is_spare() {
-                if self.rolls < self.max_rolls {
+                if !(self.is_game_complete()) {
                     self.score += pins;
                 }
                 self.reset_active_frame(pins);
@@ -77,14 +77,18 @@ impl BowlingGame {
     }
 
     pub fn score(&self) -> Option<u16> {
-        if self.rolls < self.max_rolls {
+        if !(self.is_game_complete()) {
             return None;
         }
 
         Some(self.score)
     }
 
-    fn is_spare_last_frame(&mut self) -> bool {
+    fn is_spare_last_frame(&self) -> bool {
         self.active_frame.as_ref().unwrap().is_spare() && self.rolls == self.max_rolls
+    }
+
+    fn is_game_complete(&self) -> bool {
+        self.rolls == self.max_rolls
     }
 }
