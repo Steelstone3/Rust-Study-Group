@@ -87,12 +87,20 @@ impl From<StateMachine<Combat>> for StateMachine<GameOver> {
     }
 }
 
-fn main() {
+fn state_controller() {
     let mut new_game = StateMachine::new();
-
+        
     let mut exploration = StateMachine::<Exploration>::from(new_game);
-
+    
     let mut combat = StateMachine::<Combat>::from(exploration);
-
+    
     let mut game_over = StateMachine::<GameOver>::from(combat);
+}
+
+fn main() {
+    loop {
+       state_controller();
+
+       return
+    }
 }
