@@ -24,6 +24,10 @@ impl Frame {
             false
         }
     }
+
+    fn is_second_roll_in_frame(&self) -> bool {
+        self.roll_two_pins.is_none()
+    }
 }
 
 impl BowlingGame {
@@ -61,7 +65,7 @@ impl BowlingGame {
                     self.score += pins;
                 }
                 self.reset_active_frame(pins);
-            } else if frame.roll_two_pins.is_none() {
+            } else if frame.is_second_roll_in_frame() {
                 frame.roll_two_pins = Some(pins);
                 if self.is_spare_last_frame() {
                     self.max_rolls += 1;
