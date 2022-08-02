@@ -7,6 +7,7 @@ pub enum Error {
 pub struct BowlingGame {
     rolls: u16,
     score: u16,
+    max_rolls: u16,
     active_frame: Option<Frame>,
 }
 
@@ -29,6 +30,7 @@ impl BowlingGame {
     pub fn new() -> Self {
         Self {
             rolls: 0,
+            max_rolls: 20,
             score: 0,
             active_frame: None,
         }
@@ -46,7 +48,7 @@ impl BowlingGame {
             return Err(Error::NotEnoughPinsLeft);
         }
 
-        if self.rolls == 20 {
+        if self.rolls == self.max_rolls {
             return Err(Error::GameComplete);
         }
 
@@ -55,10 +57,15 @@ impl BowlingGame {
 
         if let Some(ref mut frame) = self.active_frame {
             if frame.is_spare() {
-                self.score += pins;
+                if self.rolls < self.max_rolls {
+                    self.score += pins;
+                }
                 self.reset_active_frame(pins);
             } else if frame.roll_two_pins.is_none() {
                 frame.roll_two_pins = Some(pins);
+                if frame.is_spare() && self.rolls == self.max_rolls {
+                    self.max_rolls += 1;
+                }
             } else {
                 self.reset_active_frame(pins);
             }
@@ -70,7 +77,7 @@ impl BowlingGame {
     }
 
     pub fn score(&self) -> Option<u16> {
-        if self.rolls < 20 {
+        if self.rolls < self.max_rolls {
             return None;
         }
 
