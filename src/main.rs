@@ -40,7 +40,7 @@ impl StateMachine<NewGame> {
 struct Exploration;
 
 impl From<StateMachine<NewGame>> for StateMachine<Exploration> {
-    fn from(state: StateMachine<NewGame>) -> StateMachine<Exploration> {
+    fn from(mut state: StateMachine<NewGame>) -> StateMachine<Exploration> {
         print!("exploration started\n");
         StateMachine {
             state: Exploration,
@@ -57,7 +57,7 @@ impl From<StateMachine<NewGame>> for StateMachine<Exploration> {
 struct Combat;
 
 impl From<StateMachine<Exploration>> for StateMachine<Combat> {
-    fn from(state: StateMachine<Exploration>) -> StateMachine<Combat> {
+    fn from(mut state: StateMachine<Exploration>) -> StateMachine<Combat> {
         print!("combat started\n");
         
         StateMachine {
@@ -71,27 +71,28 @@ impl From<StateMachine<Exploration>> for StateMachine<Combat> {
 struct GameOver;
 
 impl From<StateMachine<Combat>> for StateMachine<GameOver> {
-    fn from(state: StateMachine<Combat>) -> StateMachine<GameOver> {
+    fn from(mut state: StateMachine<Combat>) -> StateMachine<GameOver> {
         print!("game over\n");
-            
+        
+        let mut ship = state.ship;
+
+        ship.shields = 0;
+        ship.hull = 0;
+
         StateMachine {
             state: GameOver,
-            ship: Ship {
-                name: "Bob".to_string(),
-                hull: 0,
-                shields: 0,
-            },
+            ship,
             galaxy: state.galaxy
         }
     }
 }
 
 fn main() {
-    let new_game = StateMachine::new();
+    let mut new_game = StateMachine::new();
 
-    let exploration = StateMachine::<Exploration>::from(new_game);
+    let mut exploration = StateMachine::<Exploration>::from(new_game);
 
-    let combat = StateMachine::<Combat>::from(exploration);
+    let mut combat = StateMachine::<Combat>::from(exploration);
 
-    let game_over = StateMachine::<GameOver>::from(combat);
+    let mut game_over = StateMachine::<GameOver>::from(combat);
 }
