@@ -63,7 +63,7 @@ impl BowlingGame {
                 self.reset_active_frame(pins);
             } else if frame.roll_two_pins.is_none() {
                 frame.roll_two_pins = Some(pins);
-                if frame.is_spare() && self.rolls == self.max_rolls {
+                if BowlingGame::is_spare_last_frame(self.rolls, self.max_rolls, frame.is_spare()) {
                     self.max_rolls += 1;
                 }
             } else {
@@ -82,5 +82,9 @@ impl BowlingGame {
         }
 
         Some(self.score)
+    }
+
+    fn is_spare_last_frame(rolls: u16, max_rolls: u16, is_spare: bool) -> bool {
+        is_spare && rolls == max_rolls
     }
 }
