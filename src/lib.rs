@@ -111,13 +111,16 @@ impl BowlingGame {
         }
 
         if self.number_of_strike_bonuses > 2 {
-            self.number_of_strike_bonuses -= 1;
-            self.score += pins;
+            self.process_strike_bonus(pins);
         }
         if self.number_of_strike_bonuses > 0 {
-            self.number_of_strike_bonuses -= 1;
-            self.score += pins;
+            self.process_strike_bonus(pins);
         }
+    }
+
+    fn process_strike_bonus(&mut self, pins: u16) {
+        self.number_of_strike_bonuses -= 1;
+        self.score += pins;
     }
 
     fn check_for_spares(&mut self) {
