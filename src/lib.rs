@@ -110,6 +110,10 @@ impl BowlingGame {
             }
         }
 
+        if self.number_of_strike_bonuses > 2 {
+            self.number_of_strike_bonuses -= 1;
+            self.score += pins;
+        }
         if self.number_of_strike_bonuses > 0 {
             self.number_of_strike_bonuses -= 1;
             self.score += pins;
