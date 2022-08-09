@@ -109,7 +109,7 @@ impl BowlingGame {
 
     fn calculate_bonus_score(&mut self, pins: u16) {
         if self.last_frame_was_spare {
-            if !(self.is_game_complete()) {
+            if !self.is_game_complete() {
                 self.score += pins;
             }
         }
@@ -130,7 +130,7 @@ impl BowlingGame {
     fn check_for_spares(&mut self) {
         if self.active_frame.is_spare() {
             self.last_frame_was_spare = true;
-            if self.is_last_frame() {
+            if self.is_last_frame() && self.max_rolls < 21 {
                 self.max_rolls += 1;
             }
         }
