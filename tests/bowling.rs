@@ -186,7 +186,6 @@ fn consecutive_strikes_each_get_the_two_roll_bonus() {
 }
 
 #[test]
-#[ignore]
 fn a_strike_in_the_last_frame_earns_a_two_roll_bonus_that_is_counted_once() {
     let mut game = BowlingGame::new();
 

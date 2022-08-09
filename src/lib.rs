@@ -97,7 +97,11 @@ impl BowlingGame {
         self.active_frame.roll_one_pins = Some(pins);
         if pins == 10 {
             self.rolls += 1;
-            self.number_of_strike_bonuses += 2;
+            if self.is_last_frame() {
+                self.max_rolls += 2;
+            } else {
+                self.number_of_strike_bonuses += 2;
+            }
             self.reset_active_frame();
         }
         self.last_frame_was_spare = false;
