@@ -79,7 +79,7 @@ impl BowlingGame {
             self.record_first_roll(pins);
         }
         else if self.active_frame.is_second_roll_in_frame() {
-            self.active_frame.roll_two_pins = Some(pins);
+            self.record_second_roll(pins);
             self.check_for_spares();
             self.reset_active_frame()
         }
@@ -87,8 +87,15 @@ impl BowlingGame {
         Ok(())
     }
 
+    fn record_second_roll(&mut self, pins: u16) {
+        self.active_frame.roll_two_pins = Some(pins);
+    }
+
     fn record_first_roll(&mut self, pins: u16) {
         self.active_frame.roll_one_pins = Some(pins);
+        if pins == 10 {
+            self.rolls += 1;
+        }
         self.last_frame_was_spare = false;
     }
 
