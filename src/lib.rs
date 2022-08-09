@@ -9,7 +9,8 @@ pub struct BowlingGame {
     score: u16,
     max_rolls: u16,
     active_frame: Frame,
-    last_frame_was_spare: bool
+    last_frame_was_spare: bool,
+    number_of_strike_bonuses: u8,
 }
 
 pub struct Frame {
@@ -45,7 +46,8 @@ impl BowlingGame {
                 roll_one_pins: None,
                 roll_two_pins: None,
             },
-            last_frame_was_spare: false
+            last_frame_was_spare: false,
+            number_of_strike_bonuses: 0
         }
     }
 
@@ -73,9 +75,9 @@ impl BowlingGame {
 
         self.rolls += 1;
         self.score += pins;
+        self.calculate_bonus_score(pins);
 
         if self.active_frame.is_first_roll_in_frame() {
-            self.calculate_bonus_score(pins);
             self.record_first_roll(pins);
         }
         else if self.active_frame.is_second_roll_in_frame() {
@@ -95,6 +97,7 @@ impl BowlingGame {
         self.active_frame.roll_one_pins = Some(pins);
         if pins == 10 {
             self.rolls += 1;
+            self.number_of_strike_bonuses += 2;
         }
         self.last_frame_was_spare = false;
     }
@@ -104,6 +107,11 @@ impl BowlingGame {
             if !(self.is_game_complete()) {
                 self.score += pins;
             }
+        }
+
+        if self.number_of_strike_bonuses > 0 {
+            self.number_of_strike_bonuses -= 1;
+            self.score += pins;
         }
     }
 
