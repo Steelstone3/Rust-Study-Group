@@ -26,6 +26,10 @@ impl Frame {
         }
     }
 
+    fn is_first_roll_in_frame(&self) -> bool {
+        self.roll_one_pins.is_none()
+    }
+
     fn is_second_roll_in_frame(&self) -> bool {
         self.roll_two_pins.is_none()
     }
@@ -63,7 +67,6 @@ impl BowlingGame {
         if pins > 10 {
             return Err(Error::NotEnoughPinsLeft);
         }
-
         if self.is_game_complete() {
             return Err(Error::GameComplete);
         }
@@ -71,28 +74,39 @@ impl BowlingGame {
         self.rolls += 1;
         self.score += pins;
 
-        if self.active_frame.roll_one_pins.is_none() {
-            self.active_frame.roll_one_pins = Some(pins);
-
-            if self.last_frame_was_spare {
-                if !(self.is_game_complete()) {
-                    self.score += pins;
-                }
-                self.last_frame_was_spare = false;
-            }
+        if self.active_frame.is_first_roll_in_frame() {
+            self.calculate_bonus_score(pins);
+            self.record_first_roll(pins);
         }
         else if self.active_frame.is_second_roll_in_frame() {
             self.active_frame.roll_two_pins = Some(pins);
-            if self.active_frame.is_spare() {
-                self.last_frame_was_spare = true;
-                if self.is_last_frame() {
-                    self.max_rolls += 1;
-                }
-            }
+            self.check_for_spares();
             self.reset_active_frame()
         }
 
         Ok(())
+    }
+
+    fn record_first_roll(&mut self, pins: u16) {
+        self.active_frame.roll_one_pins = Some(pins);
+        self.last_frame_was_spare = false;
+    }
+
+    fn calculate_bonus_score(&mut self, pins: u16) {
+        if self.last_frame_was_spare {
+            if !(self.is_game_complete()) {
+                self.score += pins;
+            }
+        }
+    }
+
+    fn check_for_spares(&mut self) {
+        if self.active_frame.is_spare() {
+            self.last_frame_was_spare = true;
+            if self.is_last_frame() {
+                self.max_rolls += 1;
+            }
+        }
     }
 
     pub fn score(&self) -> Option<u16> {
