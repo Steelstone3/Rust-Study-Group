@@ -1,3 +1,5 @@
+use chrono::prelude::*;
+
 fn main() {
     println!("Hello, world!");
 }
@@ -13,17 +15,35 @@ trait Repository {
     fn retrieve(&self);
 }
 
-struct Account {}
+struct Transaction {
+    amount: u32,
+    date: Date<Utc>,
+}
+
+impl Transaction {
+    fn new(amount: u32) -> Transaction {
+        Transaction {
+            amount: amount,
+            date: Utc.ymd(2022, 8, 30),
+        }
+    }
+}
+
+struct Account {
+    transactions: Vec<Transaction>,
+}
 
 impl Account {
     fn new() -> Account {
-        Account {}
+        Account {
+            transactions: vec![],
+        }
     }
 }
 
 impl AccountService for Account {
     fn deposit(&mut self, amount: u32) {
-        todo!()
+        self.transactions.push(Transaction::new(amount));
     }
 
     fn withdraw(&mut self, amount: u32) {
@@ -31,7 +51,13 @@ impl AccountService for Account {
     }
 
     fn print(&self) -> String {
-        "Date || Amount || Balance\n".to_string()
+        let mut statement = "Date || Amount || Balance\n".to_string();
+        for entry in self.transactions.iter() {
+            let date = entry.date.format("%Y-%m-%d");
+            let amount = entry.amount;
+            statement.push_str(format!("{date} || {amount} || {amount}").as_ref());
+        }
+        statement
     }
 }
 
@@ -46,5 +72,18 @@ mod tests {
         let result = account.print();
 
         assert_eq!(result, "Date || Amount || Balance\n");
+    }
+    #[test]
+    fn call_print_function_adding_deposit() {
+        let mut account = Account::new();
+
+        account.deposit(20);
+        let result = account.print();
+
+        assert_eq!(
+            result,
+            "Date || Amount || Balance\n\
+             2022-08-30 || 20 || 20"
+        );
     }
 }
