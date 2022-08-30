@@ -1,5 +1,5 @@
 [package]
-name = "conways_game_of_life"
+name = "bank-kata-production-style"
 version = "0.1.0"
 edition = "2021"
 
