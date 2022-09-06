@@ -16,15 +16,17 @@ trait Repository {
 }
 
 struct Transaction {
-    amount: u32,
     date: Date<Utc>,
+    amount: u32,
+    balance: u32,
 }
 
 impl Transaction {
-    fn new(amount: u32) -> Transaction {
+    fn new(amount: u32, balance: u32) -> Transaction {
         Transaction {
-            amount: amount,
             date: Utc.ymd(2022, 8, 30),
+            amount,
+            balance
         }
     }
 }
@@ -39,11 +41,15 @@ impl Account {
             transactions: vec![],
         }
     }
+
+    fn balance(&self) -> u32 {
+        self.transactions.last().map(|t| t.balance).unwrap_or(0)
+    }
 }
 
 impl AccountService for Account {
     fn deposit(&mut self, amount: u32) {
-        self.transactions.push(Transaction::new(amount));
+        self.transactions.push(Transaction::new(amount, self.balance() + amount));
     }
 
     fn withdraw(&mut self, amount: u32) {
@@ -104,5 +110,14 @@ mod tests {
              2022-08-30 || 20 || 20\n\
              2022-08-30 || 30 || 50\n"
         );
+    }
+
+    #[test]
+    fn given_no_transactions_balance_returns_0() {
+        let mut account = Account::new();
+
+        let result = account.balance();
+
+        assert_eq!(result,0);
     }
 }
