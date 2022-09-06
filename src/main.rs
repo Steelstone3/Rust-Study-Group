@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use rusqlite::{Connection, Result};
 
 fn main() {
     println!("Hello, world!");
@@ -11,7 +12,7 @@ trait AccountService {
 }
 
 trait Repository {
-    fn add(&self, account: Account);
+    fn store(&self, account: Account);
     fn retrieve(&self);
 }
 
@@ -69,9 +70,41 @@ impl AccountService for Account {
     }
 }
 
+struct SqliteRepository {
+    connection: Connection
+}
+
+impl SqliteRepository {
+    pub fn new() -> Result<SqliteRepository> {
+        let connection = Connection::open("bank.db")?;
+        connection.execute(
+            "create table if not exists account_transaction (
+             account_id integer,
+             date text not null,
+             amount integer not null,
+             balance integer not null
+         )", [])?;
+
+        Ok(SqliteRepository { connection })
+    }
+}
+
+impl Repository for SqliteRepository {
+    fn store(&self, account: Account) {
+        let transaction = account.transactions.get(0);
+        self.connection.execute("INSERT INTO account_transaction (account_id, date, amount, balance)\
+        VALUES (?1, ?2, ?3, ?4)", (0, "2022-08-30", 20, 20));
+    }
+
+    fn retrieve(&self) {
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     #[test]
     fn call_print_function_no_actions() {
@@ -119,5 +152,32 @@ mod tests {
         let result = account.balance();
 
         assert_eq!(result,0);
+    }
+
+    #[test]
+    fn store_in_database() {
+        fs::remove_file("bank.db");
+        let repository = SqliteRepository::new().unwrap();
+        let mut account = Account::new();
+
+        account.deposit(20);
+
+        repository.store(account);
+        let conn = Connection::open("bank.db").unwrap();
+        let mut statement = conn.prepare(
+            "SELECT account_id, date, amount, balance \
+                FROM account_transaction").unwrap();
+        let transaction = statement.query_map([], |row| {
+            Ok((row.get::<usize, u32>(0).unwrap(),
+                row.get::<usize, String>(1).unwrap(),
+                row.get::<usize, u32>(2).unwrap(),
+                row.get::<usize, u32>(3).unwrap()))
+        }).unwrap().last().expect("No results from query").unwrap();
+
+        assert_eq!(transaction.0, 0);
+        assert_eq!(transaction.1, "2022-08-30");
+        assert_eq!(transaction.2, 20);
+        assert_eq!(transaction.3, 20);
+        fs::remove_file("bank.db").unwrap();
     }
 }
