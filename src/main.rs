@@ -17,7 +17,7 @@ trait Repository {
 }
 
 struct Transaction {
-    date: Date<Utc>,
+    date: NaiveDate,
     amount: u32,
     balance: u32,
 }
@@ -25,7 +25,7 @@ struct Transaction {
 impl Transaction {
     fn new(amount: u32, balance: u32) -> Transaction {
         Transaction {
-            date: Utc.ymd(2022, 8, 30),
+            date: NaiveDate::from_ymd(2022, 8, 30),
             amount,
             balance,
         }
