@@ -111,6 +111,7 @@ impl Repository for SqliteRepository {
 mod tests {
     use super::*;
     use std::fs;
+    use test_context::{test_context, TestContext};
 
     #[test]
     fn call_print_function_no_actions() {
@@ -160,16 +161,32 @@ mod tests {
         assert_eq!(result, 0);
     }
 
+    struct DbContext {
+        filename: String,
+    }
+
+    impl TestContext for DbContext {
+        fn setup() -> Self {
+            DbContext {
+                filename: "bank.db".to_string(),
+            }
+        }
+
+        fn teardown(self) {
+            fs::remove_file("bank.db");
+        }
+    }
+
+    #[test_context(DbContext)]
     #[test]
-    fn store_in_database() {
-        fs::remove_file("bank.db");
+    fn store_in_database(ctx: &mut DbContext) {
         let repository = SqliteRepository::new().unwrap();
         let mut account = Account::new();
 
         account.deposit(20);
 
         repository.store(account);
-        let conn = Connection::open("bank.db").unwrap();
+        let conn = Connection::open(&ctx.filename).unwrap();
         let mut statement = conn
             .prepare(
                 "SELECT account_id, date, amount, balance \
@@ -194,6 +211,5 @@ mod tests {
         assert_eq!(transaction.1, "2022-08-30");
         assert_eq!(transaction.2, 20);
         assert_eq!(transaction.3, 20);
-        fs::remove_file("bank.db").unwrap();
     }
 }

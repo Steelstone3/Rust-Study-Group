@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 chrono = "0.4.22"
 rusqlite = { version = "0.28.0", features = ["bundled"] }
+test-context = "0.1.4"
