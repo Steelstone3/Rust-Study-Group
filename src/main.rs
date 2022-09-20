@@ -13,7 +13,7 @@ trait AccountService {
 
 trait Repository {
     fn store(&self, account: Account);
-    fn retrieve(&self);
+    fn retrieve(&self) -> Account;
 }
 
 struct Transaction {
@@ -30,6 +30,14 @@ impl Transaction {
             balance,
         }
     }
+
+    fn with_date(amount: u32, balance: u32, date: NaiveDate) -> Transaction {
+        Transaction {
+            date,
+            amount,
+            balance,
+        }
+    }
 }
 
 struct Account {
@@ -40,6 +48,12 @@ impl Account {
     fn new() -> Account {
         Account {
             transactions: vec![],
+        }
+    }
+
+    fn from(new_transactions: Vec<Transaction>) -> Account {
+        Account {
+            transactions: new_transactions,
         }
     }
 
@@ -102,8 +116,32 @@ impl Repository for SqliteRepository {
         );
     }
 
-    fn retrieve(&self) {
-        todo!()
+    fn retrieve(&self) -> Account {
+        let mut statement = self
+            .connection
+            .prepare(
+                "SELECT account_id, date, amount, balance \
+                FROM account_transaction",
+            )
+            .unwrap();
+
+        let transactions = statement
+            .query_map([], |row| {
+                Ok(Transaction::with_date(
+                    row.get::<usize, u32>(2).unwrap(),
+                    row.get::<usize, u32>(3).unwrap(),
+                    NaiveDate::parse_from_str(
+                        row.get::<usize, String>(1).unwrap().as_str(),
+                        "%Y-%m-%d",
+                    )
+                    .expect("Expected a UTC Date format"),
+                ))
+            })
+            .unwrap()
+            .map(|x| x.unwrap())
+            .collect::<Vec<Transaction>>();
+
+        Account::from(transactions)
     }
 }
 
@@ -211,5 +249,25 @@ mod tests {
         assert_eq!(transaction.1, "2022-08-30");
         assert_eq!(transaction.2, 20);
         assert_eq!(transaction.3, 20);
+    }
+
+    #[test_context(DbContext)]
+    #[test]
+    fn retrieve_from_database(ctx: &mut DbContext) {
+        let repository = SqliteRepository::new().unwrap();
+        let mut account = Account::new();
+
+        account.deposit(20);
+
+        repository.store(account);
+        let retrieved_account = repository.retrieve();
+
+        let result = retrieved_account.print();
+
+        assert_eq!(
+            result,
+            "Date || Amount || Balance\n\
+             2022-08-30 || 20 || 20\n"
+        );
     }
 }
