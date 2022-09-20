@@ -27,7 +27,7 @@ impl Transaction {
         Transaction {
             date: Utc.ymd(2022, 8, 30),
             amount,
-            balance
+            balance,
         }
     }
 }
@@ -50,7 +50,8 @@ impl Account {
 
 impl AccountService for Account {
     fn deposit(&mut self, amount: u32) {
-        self.transactions.push(Transaction::new(amount, self.balance() + amount));
+        self.transactions
+            .push(Transaction::new(amount, self.balance() + amount));
     }
 
     fn withdraw(&mut self, amount: u32) {
@@ -71,7 +72,7 @@ impl AccountService for Account {
 }
 
 struct SqliteRepository {
-    connection: Connection
+    connection: Connection,
 }
 
 impl SqliteRepository {
@@ -83,7 +84,9 @@ impl SqliteRepository {
              date text not null,
              amount integer not null,
              balance integer not null
-         )", [])?;
+         )",
+            [],
+        )?;
 
         Ok(SqliteRepository { connection })
     }
@@ -92,8 +95,11 @@ impl SqliteRepository {
 impl Repository for SqliteRepository {
     fn store(&self, account: Account) {
         let transaction = account.transactions.get(0);
-        self.connection.execute("INSERT INTO account_transaction (account_id, date, amount, balance)\
-        VALUES (?1, ?2, ?3, ?4)", (0, "2022-08-30", 20, 20));
+        self.connection.execute(
+            "INSERT INTO account_transaction (account_id, date, amount, balance)\
+        VALUES (?1, ?2, ?3, ?4)",
+            (0, "2022-08-30", 20, 20),
+        );
     }
 
     fn retrieve(&self) {
@@ -151,7 +157,7 @@ mod tests {
 
         let result = account.balance();
 
-        assert_eq!(result,0);
+        assert_eq!(result, 0);
     }
 
     #[test]
@@ -164,15 +170,25 @@ mod tests {
 
         repository.store(account);
         let conn = Connection::open("bank.db").unwrap();
-        let mut statement = conn.prepare(
-            "SELECT account_id, date, amount, balance \
-                FROM account_transaction").unwrap();
-        let transaction = statement.query_map([], |row| {
-            Ok((row.get::<usize, u32>(0).unwrap(),
-                row.get::<usize, String>(1).unwrap(),
-                row.get::<usize, u32>(2).unwrap(),
-                row.get::<usize, u32>(3).unwrap()))
-        }).unwrap().last().expect("No results from query").unwrap();
+        let mut statement = conn
+            .prepare(
+                "SELECT account_id, date, amount, balance \
+                FROM account_transaction",
+            )
+            .unwrap();
+        let transaction = statement
+            .query_map([], |row| {
+                Ok((
+                    row.get::<usize, u32>(0).unwrap(),
+                    row.get::<usize, String>(1).unwrap(),
+                    row.get::<usize, u32>(2).unwrap(),
+                    row.get::<usize, u32>(3).unwrap(),
+                ))
+            })
+            .unwrap()
+            .last()
+            .expect("No results from query")
+            .unwrap();
 
         assert_eq!(transaction.0, 0);
         assert_eq!(transaction.1, "2022-08-30");
